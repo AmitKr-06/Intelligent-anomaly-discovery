@@ -99,3 +99,5 @@ mlruns/
 # Saved models and artifacts (DVC will track these later)
 /models/*
 !/models/.gitkeep
+# Notebooks (kept local)
+notebooks/*.ipynb
