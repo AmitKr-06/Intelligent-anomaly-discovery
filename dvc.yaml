@@ -1,0 +1,59 @@
+stages:
+  data_ingestion:
+    cmd: python -m src.data.data_ingestion
+    deps:
+      - src/data/data_ingestion.py
+      - src/constants.py
+      - data/raw/ai4i2020.csv
+    params:
+      - data_ingestion
+    outs:
+      - data/interim
+
+  data_preprocessing:
+    cmd: python -m src.features.data_preprocessing
+    deps:
+      - src/features/data_preprocessing.py
+      - src/constants.py
+      - data/interim
+    outs:
+      - data/processed
+      - models/preprocessor.joblib
+
+  model_building:
+    cmd: python -m src.model.model_building
+    deps:
+      - src/model/model_building.py
+      - src/model/scorers.py
+      - data/processed/X_train.csv
+    params:
+      - model_building
+    outs:
+      - models/iforest.joblib
+      - models/dbscan.joblib
+      - models/gmm.joblib
+
+  model_evaluation:
+    cmd: python -m src.model.model_evaluation
+    deps:
+      - src/model/model_evaluation.py
+      - src/model/scorers.py
+      - src/constants.py
+      - data/processed/X_test.csv
+      - data/processed/y_test.csv
+      - models/preprocessor.joblib
+      - models/iforest.joblib
+      - models/dbscan.joblib
+      - models/gmm.joblib
+    params:
+      - data_ingestion
+      - model_building
+      - model_evaluation
+    metrics:
+      - reports/metrics.json:
+          cache: false          # keep in Git, so metrics diffs are readable
+    outs:
+      - reports/pr_curve.png:
+          cache: false
+      - reports/experiment_info.json:
+          cache: false
