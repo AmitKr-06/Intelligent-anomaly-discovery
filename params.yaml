@@ -14,3 +14,8 @@ model_building:
     n_components: 7
     covariance_type: full
     n_init: 5
+
+model_evaluation:
+  review_budgets: [0.01, 0.03, 0.05, 0.10]   # top fractions an analyst would review
+  n_bootstrap: 500                            # resamples for confidence intervals
+  random_state: 42
