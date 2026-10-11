@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 
 from src.logger import logging
 from src.exception import CustomException
+from src.constants import TARGET_COL, TRAIN_REQUIRED_COLS
 
 def load_params(params_path: str) -> dict:
     """Load parameters from the YAML file."""
@@ -31,12 +32,7 @@ def load_data(data_path: str) -> pd.DataFrame:
 def validate_data(df: pd.DataFrame) -> None:
     """Check that the columns the pipeline needs are present."""
     try:
-        required = [
-            "Type", "Air temperature [K]", "Process temperature [K]",
-            "Rotational speed [rpm]", "Torque [Nm]", "Tool wear [min]",
-            "Machine failure",
-        ]
-        missing = [c for c in required if c not in df.columns]
+        missing = [c for c in TRAIN_REQUIRED_COLS if c not in df.columns]
         if missing:
             raise ValueError(f"Missing required columns: {missing}")
         logging.info("Data validation passed")
@@ -52,7 +48,7 @@ def split_data(df: pd.DataFrame, test_size: float, random_state: int):
         train_df, test_df = train_test_split(
             df, test_size=test_size,
             random_state=random_state,
-            stratify=df["Machine failure"],
+            stratify=df[TARGET_COL],
         )
         logging.info("Split done: train = %s, test = %s", train_df.shape, test_df.shape)
         return train_df, test_df
@@ -79,7 +75,7 @@ def main():
 
         # Load and check the raw data
         df = load_data(params["raw_path"])
-
+        validate_data(df)
         # Split (the same random_state always gives the same split)
         train_df, test_df = split_data(df, params["test_size"], params["random_state"])
 
