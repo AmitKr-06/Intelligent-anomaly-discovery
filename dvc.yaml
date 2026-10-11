@@ -37,6 +37,7 @@ stages:
     cmd: python -m src.model.model_evaluation
     deps:
       - src/model/model_evaluation.py
+      - src/model/metrics.py
       - src/model/scorers.py
       - src/constants.py
       - data/processed/X_test.csv
