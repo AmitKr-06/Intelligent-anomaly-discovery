@@ -75,8 +75,12 @@ target/
 # Jupyter NB Checkpoints
 .ipynb_checkpoints/
 
-# exclude data from source control by default
-/data/
+# Data: ignore contents, but keep DVC tracking files
+/data/*
+!/data/raw/
+/data/raw/*
+!/data/raw/*.dvc
+!/data/raw/.gitignore
 
 # Mac OS-specific storage files
 .DS_Store
@@ -87,3 +91,11 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+# Logs and experiment tracking
+logs/
+mlruns/
+
+# Saved models and artifacts (DVC will track these later)
+/models/*
+!/models/.gitkeep

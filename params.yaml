@@ -1,0 +1,4 @@
+data_ingestion:
+  raw_path: data/raw/ai4i2020.csv   # where the original CSV lives
+  test_size: 0.2
+  random_state: 42

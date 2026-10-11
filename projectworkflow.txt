@@ -6,3 +6,4 @@ conda activate anomaly
  pip install cookiecutter
 cookiecutter -c v1 https://github.com/drivendata/cookiecutter-data-science
 
+4. git add, commit, and push
