@@ -2,3 +2,15 @@ data_ingestion:
   raw_path: data/raw/ai4i2020.csv   # where the original CSV lives
   test_size: 0.2
   random_state: 42
+
+model_building:
+  random_state: 42
+  isolation_forest:
+    n_estimators: 300
+  dbscan:
+    eps: 1.0
+    min_samples: 14
+  gmm:
+    n_components: 7
+    covariance_type: full
+    n_init: 5
