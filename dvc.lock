@@ -175,3 +175,68 @@ stages:
       hash: md5
       md5: 570d33b54965d707900ffd140da52978
       size: 72060
+  multi_seed_eval:
+    cmd: python -m src.model.multi_seed_eval
+    deps:
+    - path: data/raw/ai4i2020.csv
+      hash: md5
+      md5: f0adaa9c5e25366c6df1cc2684479871
+      size: 522048
+    - path: src/constants.py
+      hash: md5
+      md5: bbbb9fbe1e9669e701e430fb0cb68c35
+      size: 1274
+    - path: src/features/data_preprocessing.py
+      hash: md5
+      md5: becb332cf6f50071fb14654ca0840726
+      size: 4627
+    - path: src/model/metrics.py
+      hash: md5
+      md5: f9ebaa8ff2298e8e23f492c169a34e70
+      size: 4678
+    - path: src/model/model_building.py
+      hash: md5
+      md5: 80977df62a72bb612a446745e3a3a15a
+      size: 4033
+    - path: src/model/multi_seed_eval.py
+      hash: md5
+      md5: 3afb16f09979b626551906e575ae3885
+      size: 4652
+    - path: src/model/scorers.py
+      hash: md5
+      md5: 08098548e4c234860da4ccfc5552787b
+      size: 1999
+    params:
+      params.yaml:
+        data_ingestion:
+          raw_path: data/raw/ai4i2020.csv
+          test_size: 0.2
+          random_state: 42
+        model_building:
+          random_state: 42
+          isolation_forest:
+            n_estimators: 300
+          dbscan:
+            eps: 1.0
+            min_samples: 14
+          gmm:
+            n_components: 7
+            covariance_type: full
+            n_init: 5
+        model_evaluation.review_budgets:
+        - 0.01
+        - 0.03
+        - 0.05
+        - 0.1
+        multi_seed_eval:
+          n_seeds: 10
+          base_seed: 42
+    outs:
+    - path: reports/multi_seed_metrics.json
+      hash: md5
+      md5: d6f46cea0ee11dd3dc643210582c3504
+      size: 5375
+    - path: reports/multi_seed_per_seed.csv
+      hash: md5
+      md5: 07e916dc3a34df12d70d345c0450b5b5
+      size: 6646

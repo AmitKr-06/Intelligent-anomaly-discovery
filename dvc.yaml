@@ -58,3 +58,24 @@ stages:
           cache: false
       - reports/experiment_info.json:
           cache: false
+  multi_seed_eval:
+    cmd: python -m src.model.multi_seed_eval
+    deps:
+      - src/model/multi_seed_eval.py
+      - src/model/metrics.py
+      - src/model/model_building.py
+      - src/model/scorers.py
+      - src/features/data_preprocessing.py
+      - src/constants.py
+      - data/raw/ai4i2020.csv
+    params:
+      - data_ingestion
+      - model_building
+      - model_evaluation.review_budgets
+      - multi_seed_eval
+    metrics:
+      - reports/multi_seed_metrics.json:
+          cache: false
+    outs:
+      - reports/multi_seed_per_seed.csv:
+          cache: false        
