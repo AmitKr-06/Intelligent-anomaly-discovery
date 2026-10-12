@@ -103,3 +103,4 @@ mlruns/
 # Notebooks (kept local)
 notebooks/*.ipynb
 check_scoring.py
+projectworkflow.txt
