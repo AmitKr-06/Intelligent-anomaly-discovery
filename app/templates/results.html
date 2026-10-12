@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Results — {{ filename }}</title>
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body data-job-id="{{ job_id }}">
+    <main class="page">
+
+        <!-- ------------------------------------------------ header -->
+        <header class="hero">
+            <p class="breadcrumb"><a href="/">← New analysis</a></p>
+            <h1>Analysis results</h1>
+            <p class="subtitle">
+                File: <strong>{{ filename }}</strong> ·
+                Job: <code>{{ job_id[:8] }}</code> ·
+                {{ summary.n_rows }} rows scored
+            </p>
+        </header>
+
+        <!-- ------------------------------------------------ notices -->
+        {% if summary.warnings %}
+        <section class="alert alert-warning">
+            <strong>Please note</strong>
+            <ul>
+                {% for w in summary.warnings %}<li>{{ w }}</li>{% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+        <!-- ------------------------------------------------ status pills -->
+        <section class="pills" id="risk-pills">
+            <p class="pills-caption">
+                <strong>{{ summary.n_flagged }} of {{ summary.n_rows }} rows flagged</strong>
+                (top {{ ((summary.n_flagged / summary.n_rows) * 100) | round(1) }}% by consensus score).
+                "High confidence" rows were also ranked in the top group by all three methods.
+                On the AI4I benchmark, about 75% of those rows were recorded failures, against about 34%
+                of the other flagged rows (average of 10 random splits).
+                A flag is a lead to investigate, not a confirmed fault.
+            </p>
+            <div class="pill pill-critical">
+                <span class="pill-dot"></span>
+                <span class="pill-label">High confidence (3 of 3 methods agree)</span>
+                <span class="pill-count" id="pill-critical">—</span>
+                <span class="pill-pct" id="pill-critical-pct"></span>
+            </div>
+            <div class="pill pill-warning">
+                <span class="pill-dot"></span>
+                <span class="pill-label">Review (flagged, fewer methods agree)</span>
+                <span class="pill-count" id="pill-warning">—</span>
+                <span class="pill-pct" id="pill-warning-pct"></span>
+            </div>
+            <div class="pill pill-normal">
+                <span class="pill-dot"></span>
+                <span class="pill-label">Not flagged</span>
+                <span class="pill-count" id="pill-normal">—</span>
+                <span class="pill-pct" id="pill-normal-pct"></span>
+            </div>
+        </section>
+
+        <!-- ------------------------------------------------ KPI cards -->
+        <section class="cards">
+            <div class="card stat">
+                <span class="stat-label">Rows analyzed</span>
+                <span class="stat-value">{{ summary.n_rows }}</span>
+            </div>
+            <div class="card stat">
+                <span class="stat-label">Rows flagged by cutoff</span>
+                <span class="stat-value">{{ summary.n_flagged }}</span>
+                <span class="stat-hint">top {{ ((summary.n_flagged / summary.n_rows) * 100) | round(1) }}% of rows</span>
+            </div>
+            <div class="card stat">
+                <span class="stat-label">Cutoff score</span>
+                <span class="stat-value">{{ "%.3f"|format(summary.cutoff_consensus_score) }}</span>
+                <span class="stat-hint">consensus threshold</span>
+            </div>
+            <div class="card stat">
+                <span class="stat-label">PCA variance kept</span>
+                <span class="stat-value">
+                    {{ "%.0f"|format(summary.pca_explained_variance | sum * 100) }}%
+                </span>
+                <span class="stat-hint">visualization only</span>
+            </div>
+        </section>
+
+        <!-- ------------------------------------------------ charts row 1 -->
+        <section class="card">
+            <h2>Overview</h2>
+            <div class="charts charts-2">
+                <div class="chart">
+                    <h3>Status breakdown (all rows)</h3>
+                    <canvas id="donut" height="240"></canvas>
+                    <div class="legend" id="donut-legend"></div>
+                </div>
+                <div class="chart">
+                    <h3>Consensus score histogram</h3>
+                    <canvas id="histogram" height="240"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ------------------------------------------------ charts row 2 -->
+        <section class="card">
+            <h2>Signal view</h2>
+            <div class="charts charts-2">
+                <div class="chart">
+                    <h3>PCA projection (normal vs flagged)</h3>
+                    <canvas id="scatter-power" height="240"></canvas>
+                </div>
+                <div class="chart">
+                    <h3>Flagged rows by product type</h3>
+                    <canvas id="bar-type" height="240"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ------------------------------------------------ label check -->
+        {% set ev = summary.evaluation_against_labels %}
+        {% if ev %}
+        <section class="card">
+            <h2>Check against the failure labels in your file</h2>
+            <p class="hint">
+                Your file has a 0/1 "Machine failure" column. It was not used to fit anything; it only shows
+                how well each score ranks it. {{ ev.n_failures }} failures ({{ "%.1f"|format(ev.random_baseline_ap * 100) }}% of rows).
+                Random ranking gives an average precision of about {{ "%.3f"|format(ev.random_baseline_ap) }}.
+            </p>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead><tr><th>Method</th><th>ROC-AUC</th><th>Average precision</th></tr></thead>
+                    <tbody>
+                        {% for name in ["consensus", "iforest", "dbscan", "gmm"] %}
+                        <tr>
+                            <td>{{ name }}</td>
+                            <td>{{ "%.3f"|format(ev[name].roc_auc) }}</td>
+                            <td>{{ "%.3f"|format(ev[name].ap) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ------------------------------------------------ downloads -->
+        <section class="card">
+            <h2>Downloads</h2>
+            <div class="download-row">
+                <a class="btn btn-secondary" href="{{ downloads.flagged_csv }}">Flagged rows (CSV)</a>
+                <a class="btn btn-secondary" href="{{ downloads.all_scores_csv }}">All scores (CSV)</a>
+                <a class="btn btn-secondary" href="{{ downloads.summary_json }}">Summary (JSON)</a>
+            </div>
+        </section>
+
+        <!-- ------------------------------------------------ flagged table -->
+        <section class="card">
+            <h2>
+                Flagged rows
+                <span class="muted" id="row-count">
+                    (showing {{ rows|length }} of {{ total_flagged }})
+                </span>
+            </h2>
+
+            <div class="filters">
+                <div class="chips" id="filter-chips">
+                    <button class="chip active" data-filter="all">All</button>
+                    <button class="chip" data-filter="critical">High confidence</button>
+                    <button class="chip" data-filter="warning">Review</button>
+                </div>
+                <input type="search" id="search-box" placeholder="Search row_id, Product ID…" />
+            </div>
+
+            {% if total_flagged > rows|length %}
+            <p class="hint">Showing the {{ rows|length }} highest-scoring rows. The CSV download has all {{ total_flagged }}.</p>
+            {% endif %}
+
+            <div class="table-wrap">
+                <table class="data-table" id="flagged-table">
+                    <thead>
+                        <tr>
+                            <th data-key="row_id">row_id</th>
+                            <th data-key="status">Status</th>
+                            <th data-key="consensus_score">Score</th>
+                            <th data-key="methods_agree">Agree</th>
+                            <th data-key="top_features">top_features</th>
+                            {% for col in columns %}
+                                {% if col not in ("row_id", "consensus_score", "methods_agree", "top_features") %}
+                                <th data-key="{{ col }}">{{ col }}</th>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>
+                Scores are ranks within this file, so they cannot be compared between files.
+                Results are kept in memory for one hour.
+            </p>
+        </footer>
+    </main>
+
+    <script>
+    // ---- data injected from the server ----
+    const JOB_ID    = "{{ job_id }}";
+    const ROWS      = {{ rows | tojson }};
+    const COLUMNS   = {{ columns | tojson }};
+    const CUTOFF    = {{ summary.cutoff_consensus_score }};
+    const N_ROWS    = {{ summary.n_rows }};
+    const N_FLAGGED = {{ summary.n_flagged }};
+    const N_ALL3    = {{ summary.n_flagged_by_all_three }};
+
+    // One status rule for the pills, the donut and the table:
+    //   "critical" = flagged and all three methods agree   (shown as "High confidence")
+    //   "warning"  = flagged, fewer than three agree       (shown as "Review")
+    //   "normal"   = not flagged                           (shown as "Not flagged")
+    function statusFor(row) {
+        return row.methods_agree === 3 ? "critical" : "warning";
+    }
+    const STATUS_LABEL = { critical: "High confidence", warning: "Review", normal: "Not flagged" };
+
+    // Escape text that comes from the uploaded file before it goes into innerHTML
+    function esc(v) {
+        return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                              .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    (async function () {
+
+        // ============================================================
+        //  1. PLOT DATA  (with graceful fallback)
+        // ============================================================
+        let plot = null;
+        try {
+            const plotRes = await fetch(`/api/results/${JOB_ID}/plots`);
+            if (plotRes.ok) {
+                plot = await plotRes.json();
+            } else if (plotRes.status === 404) {
+                console.warn("job not found, redirecting home");
+                window.location.href = "/";
+                return;
+            } else {
+                console.warn("plots endpoint returned", plotRes.status);
+            }
+        } catch (e) {
+            console.warn("plots fetch failed:", e);
+        }
+
+        // ============================================================
+        //  2. STATUS BUCKETS  (all numbers come from the summary)
+        // ============================================================
+        const status = { critical: N_ALL3, warning: N_FLAGGED - N_ALL3, normal: N_ROWS - N_FLAGGED };
+        const total  = N_ROWS || 1;
+
+        document.getElementById("pill-critical").textContent      = status.critical;
+        document.getElementById("pill-warning").textContent       = status.warning;
+        document.getElementById("pill-normal").textContent        = status.normal;
+        document.getElementById("pill-critical-pct").textContent  = `(${(status.critical / total * 100).toFixed(1)}%)`;
+        document.getElementById("pill-warning-pct").textContent   = `(${(status.warning  / total * 100).toFixed(1)}%)`;
+        document.getElementById("pill-normal-pct").textContent    = `(${(status.normal   / total * 100).toFixed(1)}%)`;
+
+        // ============================================================
+        //  3. DONUT
+        // ============================================================
+        (function drawDonut() {
+            const c = document.getElementById("donut");
+            const ctx = c.getContext("2d");
+            const W = c.width  = c.clientWidth;
+            const H = c.height;
+            const cx = W / 2, cy = H / 2;
+            const rOuter = Math.min(W, H) / 2 - 8;
+            const rInner = rOuter * 0.62;
+
+            const slices = [
+                { value: status.critical, color: "#e11d48" },
+                { value: status.warning,  color: "#f59e0b" },
+                { value: status.normal,   color: "#16a34a" },
+            ];
+            let start = -Math.PI / 2;
+
+            slices.forEach(s => {
+                const angle = (s.value / total) * Math.PI * 2;
+                if (angle <= 0) return;
+                ctx.beginPath();
+                ctx.arc(cx, cy, rOuter, start, start + angle);
+                ctx.arc(cx, cy, rInner, start + angle, start, true);
+                ctx.closePath();
+                ctx.fillStyle = s.color;
+                ctx.fill();
+                start += angle;
+            });
+
+            ctx.fillStyle = "#1f2430";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = "600 22px -apple-system, sans-serif";
+            ctx.fillText(`${(status.critical / total * 100).toFixed(1)}%`, cx, cy - 6);
+            ctx.font = "11px -apple-system, sans-serif";
+            ctx.fillStyle = "#6b7280";
+            ctx.fillText("high confidence", cx, cy + 14);
+
+            const legend = document.getElementById("donut-legend");
+            legend.innerHTML = [
+                ["High confidence", status.critical, "#e11d48"],
+                ["Review",          status.warning,  "#f59e0b"],
+                ["Not flagged",     status.normal,   "#16a34a"],
+            ].map(([name, val, color]) => `
+                <span class="legend-item">
+                    <span class="legend-dot" style="background:${color}"></span>
+                    ${name}: <strong>${val}</strong>
+                </span>
+            `).join("");
+        })();
+
+        // ============================================================
+        //  4. HISTOGRAM
+        // ============================================================
+        (function drawHistogram() {
+            const c = document.getElementById("histogram");
+            const ctx = c.getContext("2d");
+            const W = c.width  = c.clientWidth;
+            const H = c.height;
+
+            let counts, edges;
+            if (plot && plot.histogram) {
+                counts = plot.histogram.counts;
+                edges  = plot.histogram.edges;
+            } else {
+                const BINS = 40;
+                counts = new Array(BINS).fill(0);
+                edges  = Array.from({ length: BINS + 1 }, (_, i) => i / BINS);
+                ROWS.forEach(r => {
+                    const s = Math.max(0, Math.min(0.9999, r.consensus_score));
+                    counts[Math.floor(s * BINS)]++;
+                });
+            }
+
+            const maxCount = Math.max(...counts, 1);
+            const barW = W / counts.length;
+
+            ctx.clearRect(0, 0, W, H);
+
+            counts.forEach((count, i) => {
+                const barH = (count / maxCount) * (H - 30);
+                const x0 = edges[i] * W;
+                const isAbove = edges[i] >= CUTOFF;
+                ctx.fillStyle = isAbove ? "#e11d48" : "#4f8cff";
+                ctx.fillRect(x0, H - barH - 15, barW - 1, barH);
+            });
+
+            const cutX = CUTOFF * W;
+            ctx.strokeStyle = "#e11d48";
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(cutX, 5);
+            ctx.lineTo(cutX, H - 15);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = "#6b7280";
+            ctx.font = "11px sans-serif";
+            ctx.textAlign = "left";
+            ctx.fillText("0", 4, H - 2);
+            ctx.textAlign = "right";
+            ctx.fillText("1", W - 4, H - 2);
+
+            ctx.fillStyle = "#e11d48";
+            ctx.textAlign = "left";
+            ctx.fillText(`cutoff ${CUTOFF.toFixed(2)}`, Math.min(cutX + 4, W - 80), 14);
+        })();
+
+        // ============================================================
+        //  5. PCA SCATTER
+        // ============================================================
+        (function drawScatterPower() {
+            if (!plot || !plot.scatter) return;
+            const c = document.getElementById("scatter-power");
+            const ctx = c.getContext("2d");
+            const W = c.width  = c.clientWidth;
+            const H = c.height;
+            const pad = 28;
+
+            const normalX = plot.scatter.normal.pc1;
+            const normalY = plot.scatter.normal.pc2;
+            const flagX   = plot.scatter.flagged.pc1;
+            const flagY   = plot.scatter.flagged.pc2;
+
+            const xs = [...normalX, ...flagX];
+            const ys = [...normalY, ...flagY];
+            const xmin = Math.min(...xs), xmax = Math.max(...xs);
+            const ymin = Math.min(...ys), ymax = Math.max(...ys);
+            const tx = x => pad + ((x - xmin) / (xmax - xmin || 1)) * (W - 2 * pad);
+            const ty = y => H - pad - ((y - ymin) / (ymax - ymin || 1)) * (H - 2 * pad);
+
+            ctx.clearRect(0, 0, W, H);
+
+            ctx.fillStyle = "rgba(150,150,150,0.30)";
+            for (let i = 0; i < normalX.length; i++) {
+                ctx.beginPath();
+                ctx.arc(tx(normalX[i]), ty(normalY[i]), 1.6, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = "rgba(225,29,72,0.85)";
+            for (let i = 0; i < flagX.length; i++) {
+                ctx.beginPath();
+                ctx.arc(tx(flagX[i]), ty(flagY[i]), 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = "#6b7280";
+            ctx.font = "11px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("PC1 →", W / 2, H - 8);
+            ctx.save();
+            ctx.translate(10, H / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText("PC2 →", 0, 0);
+            ctx.restore();
+        })();
+
+        // ============================================================
+        //  6. BAR CHART: flagged per product type
+        // ============================================================
+        (function drawBarType() {
+            const c = document.getElementById("bar-type");
+            const ctx = c.getContext("2d");
+            const W = c.width  = c.clientWidth;
+            const H = c.height;
+            const pad = 30;
+
+            const idCol = COLUMNS.find(x => /product.?id/i.test(x));
+            if (!idCol) {
+                ctx.clearRect(0, 0, W, H);
+                ctx.fillStyle = "#8b95a5";
+                ctx.font = "12px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText("No Product ID column in this file", W / 2, H / 2);
+                return;
+            }
+
+            const buckets = { L: 0, M: 0, H: 0, Other: 0 };
+            ROWS.forEach(r => {
+                const v = String(r[idCol] || "");
+                const m = v.match(/^([LMH])/);
+                if (m) buckets[m[1]] += 1;
+                else   buckets.Other += 1;
+            });
+
+            const keys = ["L", "M", "H"].filter(k => buckets[k] > 0);
+            if (buckets.Other > 0) keys.push("Other");
+            if (keys.length === 0) return;
+
+            const maxV = Math.max(...keys.map(k => buckets[k]), 1);
+            const slotW = (W - 2 * pad) / keys.length;
+            const barW = slotW * 0.6;
+
+            ctx.clearRect(0, 0, W, H);
+            keys.forEach((k, i) => {
+                const v = buckets[k];
+                const barH = (v / maxV) * (H - 2 * pad);
+                const x = pad + i * slotW + (slotW - barW) / 2;
+                const y = H - pad - barH;
+
+                ctx.fillStyle = "#4f8cff";
+                ctx.fillRect(x, y, barW, barH);
+
+                ctx.fillStyle = "#1f2430";
+                ctx.font = "12px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(v, x + barW / 2, y - 6);
+
+                ctx.fillStyle = "#6b7280";
+                ctx.fillText(k, x + barW / 2, H - pad + 16);
+            });
+        })();
+
+        // ============================================================
+        //  7. TABLE: filter + search + status pills
+        // ============================================================
+        const tbody = document.getElementById("table-body");
+        const rowCountLabel = document.getElementById("row-count");
+        const searchBox = document.getElementById("search-box");
+        const chips = document.querySelectorAll(".chip");
+
+        let currentFilter = "all";
+        let currentSearch = "";
+
+        function prettyFeatures(tf) {
+            if (tf == null) return "—";
+            if (typeof tf === "string") return tf;
+            if (Array.isArray(tf)) {
+                return tf.map(p => Array.isArray(p) ? p[0] : p).slice(0, 5).join(", ");
+            }
+            if (typeof tf === "object") {
+                return Object.keys(tf).slice(0, 5).join(", ");
+            }
+            return String(tf);
+        }
+
+        function render() {
+            const q = currentSearch.toLowerCase();
+            const visible = ROWS.filter(r => {
+                const s = statusFor(r);
+                if (currentFilter !== "all" && s !== currentFilter) return false;
+                if (!q) return true;
+                return Object.values(r).some(v => String(v ?? "").toLowerCase().includes(q));
+            });
+
+            tbody.innerHTML = visible.map(r => {
+                const s = statusFor(r);
+                const cells = [
+                    `<td>${esc(r.row_id ?? "—")}</td>`,
+                    `<td><span class="status-pill status-${s}">${STATUS_LABEL[s]}</span></td>`,
+                    `<td>${(+r.consensus_score).toFixed(3)}</td>`,
+                    `<td>${esc(r.methods_agree ?? "—")}</td>`,
+                    `<td class="feat">${esc(prettyFeatures(r.top_features))}</td>`,
+                ];
+                COLUMNS.forEach(col => {
+                    if (["row_id", "consensus_score", "methods_agree", "top_features"].includes(col)) return;
+                    const v = r[col];
+                    cells.push(`<td>${v === null || v === undefined ? '<span class="muted">—</span>' : esc(v)}</td>`);
+                });
+                return `<tr>${cells.join("")}</tr>`;
+            }).join("");
+
+            rowCountLabel.textContent = `(showing ${visible.length} of ${N_FLAGGED} flagged)`;
+        }
+
+        chips.forEach(chip => {
+            chip.addEventListener("click", () => {
+                chips.forEach(c => c.classList.remove("active"));
+                chip.classList.add("active");
+                currentFilter = chip.dataset.filter;
+                render();
+            });
+        });
+
+        searchBox.addEventListener("input", e => {
+            currentSearch = e.target.value;
+            render();
+        });
+
+        render();
+    })();
+    </script>
+</body>
+</html>

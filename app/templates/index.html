@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intelligent Anomaly Discovery</title>
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+    <main class="page">
+        <header class="hero">
+            <h1>Intelligent Anomaly Discovery</h1>
+            <p class="subtitle">
+                Upload a sensor CSV. We'll score every row with multiple detectors
+                and surface the most unusual ones for review.
+            </p>
+        </header>
+
+        {% if error %}
+        <div class="alert alert-error" role="alert">
+            <strong>Could not analyze the file:</strong>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <section class="card">
+            <form action="/analyze" method="post" enctype="multipart/form-data" class="upload-form">
+                <div class="field">
+                    <label for="file">Sensor data (CSV)</label>
+                    <input
+                        type="file"
+                        id="file"
+                        name="file"
+                        accept=".csv,text/csv"
+                        required
+                    />
+                    <p class="hint">
+                        Comma, semicolon or tab separated. UTF-8 or Excel BOM.
+                        Maximum 10 MB, between {{ min_rows }} and {{ max_rows }} rows.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label for="review_pct">
+                        Review fraction
+                        <span class="value" id="pct-value">{{ default_pct }}</span>
+                    </label>
+                    <input
+                        type="range"
+                        id="review_pct"
+                        name="review_pct"
+                        min="0.001"
+                        max="{{ max_pct }}"
+                        step="0.001"
+                        value="{{ default_pct }}"
+                        oninput="document.getElementById('pct-value').textContent = this.value"
+                    />
+                    <p class="hint">
+                        Fraction of rows to flag as anomalies (e.g. 0.03 = top 3%).
+                        Must not exceed {{ max_pct }}.
+                    </p>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Analyze</button>
+            </form>
+        </section>
+
+        <section class="info-grid">
+            <div class="info">
+                <h3>Three different detectors</h3>
+                <p>Isolation Forest, DBSCAN and a Gaussian Mixture Model each rank every row. They catch different kinds of unusual behavior.</p>
+            </div>
+            <div class="info">
+                <h3>Consensus score</h3>
+                <p>The consensus is the average of the three rankings. Rows that all three rank near the top are marked "High confidence".</p>
+            </div>
+            <div class="info">
+                <h3>Clues, not causes</h3>
+                <p>Each flagged row lists the features that look most unusual. They are leads to investigate, not proof of a fault.</p>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>Results are kept in memory for one hour. Do not upload confidential data.</p>
+        </footer>
+    </main>
+</body>
+</html>
