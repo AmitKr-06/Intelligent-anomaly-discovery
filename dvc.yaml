@@ -66,6 +66,7 @@ stages:
       - src/model/model_building.py
       - src/model/scorers.py
       - src/features/data_preprocessing.py
+      - src/pipeline/predict_pipeline.py
       - src/constants.py
       - data/raw/ai4i2020.csv
     params:
