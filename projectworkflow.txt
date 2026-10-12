@@ -1,9 +1,0 @@
-1. Create a new conda environment:
-conda create -n anomaly python=3.11 -y
-2. Activate it
-conda activate anomaly
-3. Install cookiecutter
- pip install cookiecutter
-cookiecutter -c v1 https://github.com/drivendata/cookiecutter-data-science
-
-4. git add, commit, and push
