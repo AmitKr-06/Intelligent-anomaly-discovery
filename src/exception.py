@@ -16,4 +16,6 @@ class CustomException(Exception):
 
     def __str__(self) -> str:
         return self.error_message
-    
+
+class InvalidInputError(ValueError):
+    """The uploaded data cannot be analysed. The message is safe to show to the user."""

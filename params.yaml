@@ -23,3 +23,12 @@ model_evaluation:
 multi_seed_eval:
   n_seeds: 10
   base_seed: 42
+
+app:
+  min_rows: 500            # DBSCAN/GMM settings were tuned on ~8,000 rows, so tiny files are refused
+  max_rows: 20000          # keeps the response time reasonable
+  max_missing_frac: 0.3    # a sensor column with more missing values than this is rejected
+  review_pct_default: 0.03 # share of rows flagged by default
+  review_pct_max: 0.2
+  shap_max_rows: 300       # SHAP is computed for the top rows only
+  top_features: 3          # features listed per flagged row
