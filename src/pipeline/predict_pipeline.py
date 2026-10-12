@@ -145,7 +145,11 @@ def evaluate_if_labels(df: pd.DataFrame, scores: dict):
 def make_warnings(n_rows: int, n_imputed: int, models: dict) -> list:
     """Plain-language notes shown on the results page."""
     notes = []
-    if n_rows < 5000:
+    if n_rows < 2000:
+        notes.append("This is a small file. In our tests, on files under 2,000 rows the quality of the ranking "
+                     "varied a lot between samples of the same data, and the DBSCAN settings were tuned on "
+                     "about 8,000 rows. Treat the flagged list as a starting point.")
+    elif n_rows < 5000:
         notes.append("DBSCAN settings were tuned on about 8,000 rows, so results on a smaller file are less reliable.")
     if n_imputed > 0:
         notes.append(f"{n_imputed} missing or non-numeric values were replaced by the column median.")
