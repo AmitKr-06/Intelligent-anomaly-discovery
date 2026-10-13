@@ -50,6 +50,9 @@ def analysis(client):
 def test_health(client):
     assert client.get("/health").json()["status"] == "ok"
 
+def test_health_shows_the_model_version(client, monkeypatch):
+    monkeypatch.setenv("MODEL_VERSION", "7")
+    assert client.get("/health").json()["model_version"] == "7"
 
 def test_analyze_returns_summary_and_links(analysis):
     assert analysis["summary"]["n_rows"] == 1000

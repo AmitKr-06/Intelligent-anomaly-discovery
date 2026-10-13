@@ -32,3 +32,8 @@ app:
   review_pct_max: 0.2
   shap_max_rows: 300       # SHAP is computed for the top rows only
   top_features: 3          # features listed per flagged row
+
+registry:
+  model_name: anomaly-consensus
+  min_consensus_ap_mean: 0.30   # about 9x the random baseline (0.034); the current benchmark is 0.405
+  min_seeds_won: 9              # the consensus must beat each single method on at least 9 of 10 splits

@@ -125,20 +125,44 @@ stages:
       hash: md5
       md5: bbbb9fbe1e9669e701e430fb0cb68c35
       size: 1274
+    - path: src/features/data_preprocessing.py
+      hash: md5
+      md5: becb332cf6f50071fb14654ca0840726
+      size: 4627
+    - path: src/model/anomaly_model.py
+      hash: md5
+      md5: 461541bd2391fdd0ca57a4e5d11abc8f
+      size: 2841
     - path: src/model/metrics.py
       hash: md5
       md5: f9ebaa8ff2298e8e23f492c169a34e70
       size: 4678
+    - path: src/model/model_building.py
+      hash: md5
+      md5: 80977df62a72bb612a446745e3a3a15a
+      size: 4033
     - path: src/model/model_evaluation.py
       hash: md5
-      md5: d42a883240c9c582d3a1c52042b5c9b3
-      size: 6943
+      md5: c30c2dd6a94d80d91a8987b239ee7160
+      size: 7188
     - path: src/model/scorers.py
       hash: md5
       md5: 08098548e4c234860da4ccfc5552787b
       size: 1999
+    - path: src/pipeline/predict_pipeline.py
+      hash: md5
+      md5: 6d770b93c359b5b7541c717eab36854e
+      size: 11331
     params:
       params.yaml:
+        app:
+          min_rows: 500
+          max_rows: 20000
+          max_missing_frac: 0.3
+          review_pct_default: 0.03
+          review_pct_max: 0.2
+          shap_max_rows: 300
+          top_features: 3
         data_ingestion:
           raw_path: data/raw/ai4i2020.csv
           test_size: 0.2
@@ -165,8 +189,8 @@ stages:
     outs:
     - path: reports/experiment_info.json
       hash: md5
-      md5: 84bbe77ed45663e2e9d94e8505a35dd5
-      size: 54
+      md5: 3a10989ab0d6fb66cd0a43753f0d4fb2
+      size: 118
     - path: reports/metrics.json
       hash: md5
       md5: 8386326541d0a21b69c624bb2746c7a9

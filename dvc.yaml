@@ -39,6 +39,10 @@ stages:
       - src/model/model_evaluation.py
       - src/model/metrics.py
       - src/model/scorers.py
+      - src/model/anomaly_model.py
+      - src/model/model_building.py
+      - src/pipeline/predict_pipeline.py
+      - src/features/data_preprocessing.py
       - src/constants.py
       - data/processed/X_test.csv
       - data/processed/y_test.csv
@@ -50,9 +54,10 @@ stages:
       - data_ingestion
       - model_building
       - model_evaluation
+      - app
     metrics:
       - reports/metrics.json:
-          cache: false          # keep in Git, so metrics diffs are readable
+          cache: false
     outs:
       - reports/pr_curve.png:
           cache: false

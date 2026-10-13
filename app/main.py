@@ -1,4 +1,5 @@
 import io
+import os
 import json
 import time
 import uuid
@@ -176,7 +177,7 @@ def _download_links(job_id: str) -> dict:
 @app.get("/health")
 def health():
     with JOBS_LOCK:
-        return {"status": "ok", "jobs_in_memory": len(JOBS)}
+        return {"status": "ok", "jobs_in_memory": len(JOBS), "model_version": os.getenv("MODEL_VERSION", "dev")}
 
 
 def _index_context(error: str = None) -> dict:

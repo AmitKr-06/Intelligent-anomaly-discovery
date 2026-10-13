@@ -13,6 +13,7 @@ import dagshub
 from dotenv import load_dotenv
 from sklearn.metrics import average_precision_score, precision_recall_curve
 
+from src.model.anomaly_model import log_model
 from src.logger import logging
 from src.exception import CustomException
 from src.constants import TARGET_COL
@@ -153,9 +154,12 @@ def main():
             for file in ["iforest", "dbscan", "gmm", "preprocessor"]:
                 mlflow.log_artifact(f"models/{file}.joblib", artifact_path="models")
 
-            # 5. Save the run id for later stages
+            # 5. Log the model itself (code + settings), so the registry step can register it
+            model_info = log_model()
+
+            # 6. Save the run id and the model location for the registry step
             with open("reports/experiment_info.json", "w") as f:
-                json.dump({"run_id": run.info.run_id}, f, indent=4)
+                json.dump({"run_id": run.info.run_id, "model_uri": model_info.model_uri}, f, indent=4)
 
             logging.info("Model evaluation completed, MLflow run id= %s", run.info.run_id)
 
