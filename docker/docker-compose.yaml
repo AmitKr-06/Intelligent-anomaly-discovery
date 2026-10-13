@@ -5,7 +5,7 @@ services:
       dockerfile: docker/Dockerfile
       args:
         MODEL_VERSION: ${MODEL_VERSION:-dev}
-    image: anomaly-discovery:${MODEL_VERSION:-dev}
+    image: amiitkr/intelligent-anomaly-discovery:${MODEL_VERSION:-dev}
     container_name: anomaly-discovery
     ports:
       - "8000:8000"
