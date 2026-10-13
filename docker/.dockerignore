@@ -1,0 +1,47 @@
+# Version control and DVC
+.git
+.gitignore
+.dvc
+.dvcignore
+dvc.yaml
+dvc.lock
+
+# Secrets and local settings: never in an image
+.env
+.env.*
+
+# Data, models, results and experiments
+data
+models
+reports
+mlruns
+logs
+notebooks
+
+# Not needed to run the app
+tests
+docs
+references
+*.md
+projectworkflow.txt
+pytest.ini
+tox.ini
+setup.py
+Makefile
+requirements.txt
+.vscode
+.idea
+
+# Python clutter
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+*.egg-info
+.venv
+venv
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore

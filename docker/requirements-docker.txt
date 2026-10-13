@@ -1,0 +1,19 @@
+# Runtime packages for the web app inside the Docker image.
+# The full requirements.txt (notebooks, DVC, MLflow, tests, linting) is NOT installed in the image.
+
+# ---- Data and models ----
+numpy>=1.26
+pandas>=2.1
+scipy>=1.11
+scikit-learn>=1.4
+joblib>=1.3
+shap>=0.44
+
+# ---- Settings ----
+pyyaml>=6.0
+
+# ---- Web app ----
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9      # file uploads
+jinja2>=3.1                  # HTML templates

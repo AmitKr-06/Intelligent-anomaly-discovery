@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODEL_VERSION: ${MODEL_VERSION:-dev}
+    image: anomaly-discovery:${MODEL_VERSION:-dev}
+    container_name: anomaly-discovery
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_VERSION: ${MODEL_VERSION:-dev}
+    restart: unless-stopped
+    mem_limit: 2g
+    security_opt:
+      - no-new-privileges:true
+    # No env_file and no volumes on purpose: the app needs no secrets and no data
